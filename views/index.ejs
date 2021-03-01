@@ -1,8 +1,8 @@
-<% if (screen_name) {%>
-    <p>Welcome! Please <a href="/twitter/auth">log in</a>.</p>
+<% if (!screen_name) {%>
+    <p>Welcome! Please <a href="/twitter/authe">log in</a>.</p>
 <% } else { %>
 
-    <h1>Hello ${screen_name}</h1>
+    <h1>Hello <%= screen_name %></h1>
         <br>
         <a href="/twitter/logout">logout</a>
 <% } %>

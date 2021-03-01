@@ -79,14 +79,14 @@ app.get('/', async (req, res, next) => {
       return res.render('index', { screen_name : req.cookies.twitter_screen_name })
     }
     else{
-        res.render('index')
+        res.render('index', {screen_name: ''})
     }
     return next()
   }
 )
 
 
-app.get('/twitter/auth', twitter('authenticate'))
+app.get('/twitter/authe', twitter('authenticate'))
 
 app.get('/auth/oauth/callback', async (req,res) => {
     const { oauthRequestToken, oauthRequestTokenSecret } = req.session
@@ -98,6 +98,9 @@ app.get('/auth/oauth/callback', async (req,res) => {
 
     const { user_id: userId  } = results
     const user = await oauthGetUserById(userId, { oauthAccessToken, oauthAccessTokenSecret })
+
+    console.log('user');
+    console.log(user);
 
     req.session.twitter_screen_name = user.screen_name
     res.cookie('twitter_screen_name', user.screen_name, { maxAge: 900000, httpOnly: true })
