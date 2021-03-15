@@ -5,7 +5,7 @@ const routes = require('./routes/twitter')
 // const axios = require("axios");
 // const keys = require("./config/keys");
 const cookieParser = require("cookie-parser");
-const session = require("express-session");
+const session = require("cookie-session");
 // const jsonexport = require("jsonexport");
 // const fs = require("fs");
 // const {
@@ -18,7 +18,11 @@ main().catch((err) => console.error(err.message, err));
 
 async function main() {
   app.use(cookieParser());
-  app.use(session({ secret: "secret3" }));
+  // app.use(session({ secret: "secret3" }));
+  app.use(session({
+    name: 'session',
+    keys: ['key1', 'key2']
+  }))
   app.use('', routes)
 
   // function twitter(method = "authorize") {
