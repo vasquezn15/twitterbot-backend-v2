@@ -106,7 +106,7 @@ router.get("/twitter/logout", logout);
     //     return
     //   }
       res.redirect(
-        "http://localhost:3000/?user_id=" +
+        "http://localhost:3000/home?user_id=" +
           userId +
           "&username=" +
           user.screen_name
