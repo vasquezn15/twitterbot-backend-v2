@@ -1,4 +1,5 @@
-const oauth = require('oauth')
+const oauth = require('oauth');
+const { resolve } = require('path');
 const { promisify } = require('util')
 const keys = require("../config/keys");
 
@@ -38,9 +39,38 @@ const oauthConsumer = new oauth.OAuth(
       })
     })
 }
+function _encodeData(toEncode){
+  if( toEncode == null || toEncode == "" ) return ""
+  else {
+     var result= encodeURIComponent(toEncode);
+     // Fix the mismatch between OAuth's  RFC3986's and Javascript's beliefs in what is right and wrong ;)
+     return result.replace(/\!/g, "%21")
+                  .replace(/\'/g, "%27")
+                  .replace(/\(/g, "%28")
+                  .replace(/\)/g, "%29")
+                  .replace(/\*/g, "%2A");
+  }
+}
+ 
+function getSignatureWith(orderedParameters) {
+  var authHeader="OAuth ";
+  
+
+  for( var i= 0 ; i < orderedParameters.length; i++) {
+     
+      authHeader+= "" + _encodeData(orderedParameters[i][0])+"=\""+ _encodeData(orderedParameters[i][1])+"\""+ ",";
+  }
+
+  authHeader = authHeader.substring(0, authHeader.length - 1);
+  return authHeader;
+  
+}
+
+  
   
 module.exports = {
     oauthGetUserById,
     getOAuthAccessTokenWith,
-    getOAuthRequestToken
+  getOAuthRequestToken,
+  getSignatureWith
   }

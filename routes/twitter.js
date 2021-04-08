@@ -4,14 +4,16 @@ const axios = require("axios");
 const keys = require("../config/keys");
 const jsonexport = require("jsonexport");
 const fs = require("fs");
+const oauth = require('oauth');
+var btoa = require('btoa');
 
 const {
     getOAuthRequestToken,
     getOAuthAccessTokenWith,
   oauthGetUserById,
+  getSignatureWith
   } = require("../oauth/oauth-utils");
 const { response } = require('express');
-const urlencode = require('urlencode');
   
 function twitter(method = "authorize") {
     return async (req, res) => {
@@ -57,22 +59,44 @@ router.get('/twitter/unfollow', (req, res) => {
   // var cookie = getcookie(req);
 
   console.log("Access Token = ", oauthAccessToken);
-  let config = {
-    method: 'delete',
-    url: `https://api.twitter.com/2/users/${userId}/following/${target_user_id}`,
-    headers: {
-      // 'Authorization': `OAuth oauth_consumer_key="${keys.TWITTER_CONSUMER_KEY}",oauth_token="${oauthAccessToken}",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1616969239",oauth_nonce="TS18GdIfGWS",oauth_version="1.0",oauth_signature="khnGkKJDKA0imejSPARIcU%2F77AA%3D"`
-      'Authorization': 'OAuth oauth_consumer_key="H0QI8WX64hdsQJRLcdmIkXZVN",oauth_token="1623840974-IxYXzWU1909g5omycZxN9JaCyYQU0deEnTObZ8u",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1617312554",oauth_nonce="fozW0Fa0goM",oauth_version="1.0",oauth_signature="jDBefPKuH%2BPoy2djSvG%2BMtz3uVM%3D"'
-    }
-  }
+  const oauthParameters = [
+    ['oauth_consumer_key', keys.TWITTER_CONSUMER_KEY],
+    ['oauth_nonce', "Tg1DbQltbz9"],    
+    ['oauth_signature', "jDBefPKuH%2BPoy2djSvG%2BMtz3uVM%3D"],
+    ['oauth_signature_method', "HMAC-SHA1"],
+    ['oauth_timestamp', "1617850661"],
+    ['oauth_token', oauthAccessToken],
+    ['oauth_version', "1.0"]
+  ];
+  
+  let OAUTH_SIGNATURE = getSignatureWith(oauthParameters);
+  // var OAUTH_SIGNATURE = `oauth_consumer_key="${keys.TWITTER_CONSUMER_KEY}",oauth_token="${oauthAccessToken}",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1617850666",oauth_nonce="Tg1DbQltby7",oauth_version="1.0",oauth_signature="jDBefPKuH%2BPoy2djSvG%2BMtz3uVM%3D"`;
+  // var getSignatureWith(OAUTH_SIGNATURE);
+  // let config = {
+  //   method: 'delete',
+  //   url: `https://api.twitter.com/2/users/${userId}/following/${target_user_id}`,
+  //   headers: {
+      
+  //     // 'Authorization': `OAuth oauth_consumer_key="${keys.TWITTER_CONSUMER_KEY}",oauth_token="${oauthAccessToken}",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1616969239",oauth_nonce="TS18GdIfGWS",oauth_version="1.0",oauth_signature="khnGkKJDKA0imejSPARIcU%2F77AA%3D"`
+  //     "Authorization": `OAuth ${OAUTH_SIGNATURE}`,
+  //     'content-type': 'application/x-www-form-urlencoded;charset=utf-8'
+  //   }
+  // }
 
-  axios(config)
-    .then((response) => {
-      console.log(JSON.stringify(response.data));
-      alert('User successfully unfollowed');
-  })
-  .catch((error) => {
-    console.log(error);
+  // axios(config)
+  //   .then((response) => {
+  //     console.log(JSON.stringify(response.data));
+  //     alert('User successfully unfollowed');
+  // })
+  // .catch((error) => {
+  //   console.log(error);
+  // });
+  axios.delete(`https://api.twitter.com/2/users/${userId}/following/${target_user_id}`, {
+    headers: {
+      "Authorization": OAUTH_SIGNATURE,
+    }
+  }).then((response) => {
+    console.log(`response from delete request`, response);
   });
 
 })
@@ -135,66 +159,124 @@ router.get("/auth/oauth/callback", async (req, res, next) => {
   // })
 });
 
-router.get("/twitter/followers", (req, res) => {
+async function getFollowers(req) {
+  // var followers = await request_followers(req);
+  // console.log(`followers `);
+  // console.log(followers);
+  // return followers;
+
+  var nextToken = '';
+  var followers = [];
+  try {
+    do {
+      let currentFollowersResponse = await request_followers(req, nextToken);
+      let currentFollowers = currentFollowersResponse["followers"];
+      nextToken = currentFollowersResponse["nextToken"];
+      
+      if (currentFollowers && currentFollowers.length > 0) {
+        followers = followers.concat(currentFollowers);
+      }
+      return followers;
+
+    } while (nextToken);
+  }
+  catch (error) {
+    console.log(`error`, error);
+    throw new Error("Error getting followers")
+  }
+  console.log(`followers from function`, followers);
+ 
+}
+
+function request_followers(req, nextToken) {
   const userId = req.query.user_id;
-  var paginationQueryParam = "";
-  if (req.query.pagination_token) {
-    paginationQueryParam = "&pagination_token=" + req.query.pagination_token;
+  var nextTokenQuery = '';
+  if (nextToken) {
+    nextTokenQuery = "&next_token=" + nextToken;
+  }
+  return new Promise((resolve, reject) => {
     axios
-    .get(`https://api.twitter.com/2/users/${userId}/followers?max_results=10${paginationQueryParam}`, {
+    .get(`https://api.twitter.com/2/users/${userId}/followers?max_results=1000${nextTokenQuery}`, {
       headers: {
         Authorization: "Bearer " + keys.TWITTER_BEARER_TOKEN
       },
     })
-    .then((response) => {
-      res.send(JSON.stringify(response.data));
-      // jsonexport(
-      //   response.data.data,
-      //   { rowDelimiter: ";" },
-      //   function (err, csv) {
-      //     if (err) return console.error(err);
-      //     fs.writeFile("./data/test.csv", csv, (err) => {
-      //       if (err) {
-      //         console.error(err);
-      //         return;
-      //       }
-      //     });
-      //   }
-      // );
-
-    })
+      .then((response) => {
+        resolve({ followers: response.data.data, nextToken: response.data.meta.next_token });
+      })
     .catch((error) => {
-      console.log(error);
+      reject(Error("Error requesting followers", error))
     });
-  }
-
-    axios
-        .get(`https://api.twitter.com/2/users/${userId}/followers?`, {
-          headers: {
-            Authorization: "Bearer " + keys.TWITTER_BEARER_TOKEN
-          },
-        })
-        .then((response) => {
-          res.send(JSON.stringify(response.data));
-          // jsonexport(
-          //   response.data.data,
-          //   { rowDelimiter: ";" },
-          //   function (err, csv) {
-          //     if (err) return console.error(err);
-          //     fs.writeFile("./data/test.csv", csv, (err) => {
-          //       if (err) {
-          //         console.error(err);
-          //         return;
-          //       }
-          //     });
-          //   }
-          // );
-
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+  })
+  
+}
+router.get("/twitter/followers", async (req, res) => {
+  var followers = await getFollowers(req);
+  console.log(`followers from route`, followers);
+  res.send(JSON.stringify(followers));
 });
+
+// router.get("/twitter/followers", (req, res) => {
+//   const userId = req.query.user_id;
+//   var paginationQueryParam = "";
+//   if (req.query.pagination_token) {
+//     paginationQueryParam = "&pagination_token=" + req.query.pagination_token;
+//     axios
+//     .get(`https://api.twitter.com/2/users/${userId}/followers?max_results=10${paginationQueryParam}`, {
+//       headers: {
+//         Authorization: "Bearer " + keys.TWITTER_BEARER_TOKEN
+//       },
+//     })
+//       .then((response) => {
+//       res.send(JSON.stringify(response.data));
+//       // jsonexport(
+//       //   response.data.data,
+//       //   { rowDelimiter: ";" },
+//       //   function (err, csv) {
+//       //     if (err) return console.error(err);
+//       //     fs.writeFile("./data/test.csv", csv, (err) => {
+//       //       if (err) {
+//       //         console.error(err);
+//       //         return;
+//       //       }
+//       //     });
+//       //   }
+//       // );
+
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//     });
+//   }
+
+//     axios
+//         .get(`https://api.twitter.com/2/users/${userId}/followers?max_results=1000`, {
+//           headers: {
+//             Authorization: "Bearer " + keys.TWITTER_BEARER_TOKEN
+//           },
+//         })
+//       .then((response) => {
+//         console.log(`response`, response.data.data[0])
+//           res.send(JSON.stringify(response.data));
+//           // jsonexport(
+//           //   response.data.data,
+//           //   { rowDelimiter: ";" },
+//           //   function (err, csv) {
+//           //     if (err) return console.error(err);
+//           //     fs.writeFile("./data/test.csv", csv, (err) => {
+//           //       if (err) {
+//           //         console.error(err);
+//           //         return;`
+//           //       }
+//           //     });
+//           //   }
+//           // );
+
+//         })
+//         .catch((error) => {
+//           console.log(error);
+//         });
+// });
 
 router.get("/twitter/following", (req, res) => {
   const userId = req.query.user_id;
