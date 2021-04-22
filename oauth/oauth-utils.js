@@ -1,3 +1,4 @@
+const { response } = require('express');
 const oauth = require('oauth');
 const { resolve } = require('path');
 const { promisify } = require('util')
@@ -40,37 +41,46 @@ const oauthConsumer = new oauth.OAuth(
     })
 }
 function _encodeData(toEncode){
-  if( toEncode == null || toEncode == "" ) return ""
-  else {
-     var result= encodeURIComponent(toEncode);
-     // Fix the mismatch between OAuth's  RFC3986's and Javascript's beliefs in what is right and wrong ;)
-     return result.replace(/\!/g, "%21")
+  let result = encodeURIComponent(toEncode);
+  
+    return result.replace(/\!/g, "%21")
                   .replace(/\'/g, "%27")
                   .replace(/\(/g, "%28")
                   .replace(/\)/g, "%29")
                   .replace(/\*/g, "%2A");
-  }
 }
  
 function getSignatureWith(orderedParameters) {
   var authHeader="OAuth ";
-  
-
   for( var i= 0 ; i < orderedParameters.length; i++) {
      
       authHeader+= "" + _encodeData(orderedParameters[i][0])+"=\""+ _encodeData(orderedParameters[i][1])+"\""+ ",";
   }
-
   authHeader = authHeader.substring(0, authHeader.length - 1);
+  console.log('authHeader from getSignatureWith function Oauth utils', authHeader);
   return authHeader;
-  
 }
 
+function secureUnfollowRequest(url, oauth_token, oauth_token_secret) {
+  return new Promise((resolve, reject) => {
+    oauthConsumer.delete(url, oauth_token, oauth_token_secret, (err, data, response) => {
+      console.log("secureUnfollowRequest args", arguments);
+      if (err) {
+        reject("An error happened trying to unfollow user");
+        return;
+      }
+      resolve(true);
+    });
+  })
+  
+
+}
   
   
 module.exports = {
     oauthGetUserById,
     getOAuthAccessTokenWith,
   getOAuthRequestToken,
-  getSignatureWith
+  getSignatureWith,
+  secureUnfollowRequest
   }
