@@ -61,7 +61,7 @@ function getSignatureWith(orderedParameters) {
   return authHeader;
 }
 
-function secureUnfollowRequest(url, oauth_token, oauth_token_secret) {
+function secureDeleteRequest(url, oauth_token, oauth_token_secret) {
   return new Promise((resolve, reject) => {
     oauthConsumer.delete(url, oauth_token, oauth_token_secret, (err, data, response) => {
       console.log("secureUnfollowRequest args", arguments);
@@ -72,15 +72,12 @@ function secureUnfollowRequest(url, oauth_token, oauth_token_secret) {
       resolve(true);
     });
   })
-  
-
 }
-  
   
 module.exports = {
     oauthGetUserById,
     getOAuthAccessTokenWith,
   getOAuthRequestToken,
   getSignatureWith,
-  secureUnfollowRequest
+  secureDeleteRequest
   }

@@ -33,12 +33,11 @@ function request_followers(req, nextToken) {
   } else {
     userId = req.query.user_id
   }
-  console.log('userId from request followers', userId)
     var nextTokenQuery = '';
     if (nextToken) {
       nextTokenQuery = "&next_token=" + nextToken;
     }
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
       axios
       .get(`https://api.twitter.com/2/users/${userId}/followers?max_results=1000${nextTokenQuery}&user.fields=profile_image_url`, {
         headers: {
@@ -56,14 +55,12 @@ function request_followers(req, nextToken) {
 }
   
 userData.get("/twitter/followers", async (req, res) => {
-    console.log("session from followers endpoint", req.session)
     var followers = await getFollowers(req);
     res.send(JSON.stringify(followers));
   });
   
 userData.get("/twitter/following", (req, res) => {
-  console.log("session from following endpoint", req.session)
-    const userId = req.query.user_id;
+  const userId = req.query.user_id;
     axios
       .get(`https://api.twitter.com/2/users/${userId}/following?max_results=1000&user.fields=profile_image_url`, {
         headers: {
