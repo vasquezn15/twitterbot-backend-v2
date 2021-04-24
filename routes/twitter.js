@@ -61,9 +61,9 @@ router.get('/twitter/block', async (req, res) => {
   })
 })
 
-function getPythonData() {
+function getPythonData(userId) {
   // execute child process of python file
-  var User_IDs = ["123", "456", "789"]
+  var User_IDs = userId
   const child = exec(`python test.py ${User_IDs}`, (err, stdout, stderr) => {
     if (err) {
       console.error(err);
@@ -79,10 +79,14 @@ function getPythonData() {
 }
 
 router.get('/twitter/bots', (req, res) => {
+  var userId = req.query.user_id;
   // if no list of users, return error
+  if (!userId) {
+    res.send("User id needed");
+  }
   // else await list of users
   // call function to return object [userId: threat level] getPythonData(users)
-  var response = getPythonData()
+  var response = getPythonData(userId)
   // send response of object
   res.send(response);
 })
