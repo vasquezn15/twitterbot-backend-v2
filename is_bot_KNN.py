@@ -31,4 +31,5 @@ def is_bot(user_id):
     user_data = pd.json_normalize(user_data)
     load_model = pickle.load(open('kneigh.pkl', 'rb'))
     user_prediction = load_model.predict(user_data)
-    return user_prediction
+    print(user_prediction)
+    return
