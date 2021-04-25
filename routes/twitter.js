@@ -23,7 +23,7 @@ router.post('/twitter/unfollow', async (req, res) => {
   const target_user_id = req.query.target_user_id;
   let url = `https://api.twitter.com/2/users/${source_user_id}/following/${target_user_id}`;
 
-  console.log("userId from unfollow endpoint",userId);
+  console.log("userId from unfollow endpoint", source_user_id);
   try {
      await secureDeleteRequest(url, oauthAccessToken, oauthAccessTokenSecret);
   } catch (err) {
@@ -44,7 +44,7 @@ router.get('/twitter/block', async (req, res) => {
 
   const oauthAccessToken = req.session.oauthAccessToken;
   const oauthAccessTokenSecret = req.session.oauthAccessTokenSecret;
-  const source_user_id = req.query.user_id //|| "1623840974";
+  const source_user_id = req.query.user_id;
   const target_user_id = req.query.target_user_id;
   let url = `https://api.twitter.com/2/users/${source_user_id}/blocking/${target_user_id}`;
 
@@ -61,10 +61,11 @@ router.get('/twitter/block', async (req, res) => {
   })
 })
 
-function getPythonData(userId) {
+function getPythonData(userId, res) {
   // execute child process of python file
   var User_IDs = userId
-  const child = exec(`python test.py ${User_IDs}`, (err, stdout, stderr) => {
+  var dataString = ''
+  exec(`python test.py ${User_IDs}`, (err, stdout, stderr) => {
     if (err) {
       console.error(err);
       return;
@@ -72,21 +73,23 @@ function getPythonData(userId) {
       if (stderr) {
        console.error(stderr);
       return;
-       }
-
+    }
     console.log(stdout)
+    res.send({ response:stdout })
+
   });
 }
 
 router.get('/twitter/bots', (req, res) => {
-  var userId = req.query.user_id;
+  var userId = req.query.user_id || 1623840974;
   // if no list of users, return error
   if (!userId) {
     res.send("User id needed");
   }
   // else await list of users
   // call function to return object [userId: threat level] getPythonData(users)
-  var response = getPythonData(userId)
+  var response = getPythonData(userId);
+  console.log("response from; /twitter/bots: ", response)
   // send response of object
   res.send(response);
 })

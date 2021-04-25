@@ -66,7 +66,7 @@ function secureDeleteRequest(url, oauth_token, oauth_token_secret) {
     oauthConsumer.delete(url, oauth_token, oauth_token_secret, (err, data, response) => {
       console.log("secureUnfollowRequest args", arguments);
       if (err) {
-        reject("An error happened trying to unfollow user");
+        reject("An error happened trying to send request");
         return;
       }
       resolve(true);
