@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { spawn, exec } = require('child_process')
+const { exec, spawn } = require('child_process');
 
 const {
   secureDeleteRequest
   } = require("../oauth/oauth-utils");
+const { rejects } = require('assert');
   
 router.get('/current-user', (req, res) => {
   if (req.session) {
@@ -61,26 +62,36 @@ router.get('/twitter/block', async (req, res) => {
   })
 })
 
-function getPythonData(userId, res) {
+function getPythonData(userId) {
   // execute child process of python file
   var User_IDs = userId
-  var dataString = ''
-  exec(`python test.py ${User_IDs}`, (err, stdout, stderr) => {
-    if (err) {
-      console.error(err);
-      return;
+  return new Promise((resolve, reject) => {
+    var child =exec(`python test.py ${User_IDs}`, (err, stdout, stderr) => {
+      if (err) {
+        console.error(err);
+        return;
       }
       if (stderr) {
-       console.error(stderr);
-      return;
-    }
-    console.log(stdout)
-    res.send({ response:stdout })
-
-  });
+        reject(console.error(stderr));
+      }
+      var res = parseInt(stdout)
+      resolve({response:res})
+    });
+    child.stdout.on('data', (data) => {
+      var response = parseInt(data)
+      console.log('response from stdout.on', response);
+    })
+    child.on('exit', (code) => {
+      console.log('Child process exited with code', code)
+    })  
+  })
+  
+  // spawn.stdout.on('data', (data) => {
+  //   console.log('Testing stdout...\nData: ', data)
+  // })
 }
 
-router.get('/twitter/bots', (req, res) => {
+router.get('/twitter/bots', async (req, res) => {
   var userId = req.query.user_id || 1623840974;
   // if no list of users, return error
   if (!userId) {
@@ -88,10 +99,10 @@ router.get('/twitter/bots', (req, res) => {
   }
   // else await list of users
   // call function to return object [userId: threat level] getPythonData(users)
-  var response = getPythonData(userId);
-  console.log("response from; /twitter/bots: ", response)
+  var response = await getPythonData(userId);
+  console.log("response from; /twitter/bots: ", response.response)
   // send response of object
-  res.send(response);
+  res.send( response);
 })
 
 module.exports = router;
