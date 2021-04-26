@@ -27,7 +27,6 @@ def is_bot(user_id):
         'user.default_profile': user._json['default_profile'],
         'user.default_profile_image': user._json['default_profile_image']
     }
-    print(user_data)
     user_data = pd.json_normalize(user_data)
     load_model = pickle.load(open('kneigh.pkl', 'rb'))
     user_prediction = load_model.predict(user_data)
