@@ -2,7 +2,6 @@ const express = require('express');
 const userData = express.Router();
 const axios = require("axios");
 const keys = require("../config/keys");
-const { response } = require('express');
   
 async function getFollowers(req) {
     var nextToken = '';
@@ -75,11 +74,5 @@ userData.get("/twitter/following", (req, res) => {
       });
   });
 
-userData.get("/bot/followers", async (req, res) => {
-  var followers = await request_followers(req);
-  res.send(JSON.stringify(followers));
-});
-
-userData.get("/bot/followings")
 
   module.exports = userData;
