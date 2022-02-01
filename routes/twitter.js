@@ -86,18 +86,16 @@ function getPythonData(userId) {
 
 router.get("/twitter/bots", async (req, res) => {
   var userId = req.query.user_id || 1623840974;
-  // if no list of users, return error
-  if (!userId) {
-    res.send("User id needed");
-  }
-  // else await list of users
   // call function to return object [userId: threat level] getPythonData(users)
   try {
     var response = await getPythonData(userId);
-    // send response of object
+    console.log('try block')
+;    // send response of object
     res.send(response);
   } catch (error) {
+    res.send("User id needed");
     res.send(error);
+    console.log('error block')
   }
 });
 
